@@ -1,0 +1,169 @@
+<template>
+  <style>
+    .wrapper-slider {
+      width: 100%;
+      margin: 30px 0 30px 0;
+    }
+    .inner-wrapper {
+      width: 80%;
+      max-width: 1200px;
+      margin: 0 auto 0 auto;
+    }
+    .slider-content {
+      position: relative;
+    }
+    .current-image img{
+      width: 100%;
+      height: 100%;
+    }
+    .previous, .next, .current-image {
+      display: inline-block;
+    }
+    .previous, .next {
+      border-radius: 50%;
+      position: absolute;
+      cursor: pointer;
+    }
+    .previous {
+      left: -30px;
+      top: calc(50% - 10px);
+    }
+    .next {
+      top: calc(50% - 10px);
+      right: -30px;
+    }
+    .slider-dots {
+      width: 100%;
+      padding: 0;
+      list-style: none;
+      text-align: center;
+    }
+    .slider-dots li {
+      display: inline-block;
+    }
+    .slider-dot {
+      border-radius: 50% ;
+      cursor: pointer;
+    }
+    ::slotted(img) {
+      width: 100%;
+      height: 100%;
+    }
+
+  </style>
+    <div class = "wrapper-slider">
+      <div class = "inner-wrapper">
+        <div class = "slider-content">
+          <button class = "previous">
+            &bull;
+          </button>
+          <div class = "current-image">
+              <slot name = 1 id = "slide"></slot>
+          </div>
+          <button class = "next">
+            &bull;
+          </button>
+        </div>
+        <ul class = "slider-dots">
+
+        </ul>
+      </div>
+    </div>
+</template>
+<script>
+  (function() {
+    console.log('testA!');
+    const localDocument = document.currentScript.ownerDocument;
+    const shadowRoot = Symbol('shadowRoot');
+    const timerId = Symbol('timerId');
+    const countImg = Symbol('countImg');
+    const dotBtns = Symbol('dotBtns');
+    const slotImg = Symbol('slotImg');
+    const nextBtn = Symbol('nextBtn');
+    const preBtn = Symbol('preBtn');
+    document.registerElement('x-carousel', class extends HTMLElement {
+      createdCallback() {
+        console.log('testB!');
+        const self = this;
+        const width = this.dataset.width || '900px';
+        const template = localDocument.querySelector('template');
+        this[timerId] = null;
+        this[shadowRoot] = this.attachShadow({mode: 'closed'});
+        this[countImg] = [...this.children].length;
+        this[shadowRoot].appendChild(document.importNode(template.content, true));
+        this[preBtn] = this[shadowRoot].querySelector('.previous');
+        this[nextBtn] = this[shadowRoot].querySelector('.next');
+        this[slotImg] = this[shadowRoot].querySelector('slot');
+        this[dotBtns] = this[shadowRoot].querySelector('.slider-dots');
+        const innerWrapp = this[shadowRoot].querySelector('.inner-wrapper');
+        const dotsToDom = function dotsBtn() {
+          for (let i = 1; i <= self[countImg]; i++) {
+            const li = document.createElement('LI');
+            const btn = document.createElement('BUTTON');
+            btn.setAttribute('class', 'slider-dot');
+            btn.dataset.id = i;
+            btn.innerHTML = '&#8226;';
+            self[dotBtns].appendChild(li.appendChild(btn));
+          }
+        };
+        innerWrapp.style.width = width;
+        dotsToDom();
+    }
+    attachedCallback() {
+      const self = this;
+      const onClickDot = function onClickDot(e) {
+        const target = e.target;
+        if (target.classList.contains('slider-dot')) {
+          self.stop();
+          self[slotImg].name = target.dataset.id;
+          self.dispatchEvent(new CustomEvent('slidechange', { bubbles: true, composed: true, detail: {
+              indexImg: self[slotImg].name
+          }}));
+          self.start();
+        }
+      };
+      this[dotBtns].addEventListener('click', onClickDot);
+      this[preBtn].addEventListener('click', this.prev.bind(this));
+      this[nextBtn].addEventListener('click', this.next.bind(this));
+      this[slotImg].addEventListener('mouseover', this.stop.bind(this));
+      this[slotImg].addEventListener('mouseout', this.start.bind(this));
+    }
+    start() {
+      this.dispatchEvent(new CustomEvent('started', { bubbles: true,  composed: true}));
+      const timeout = (this.dataset.timeout * 1000) || 4000;
+      this[timerId] = setInterval(() => {
+        if (this[slotImg].name < this[countImg]) {
+          this[slotImg].name = ++this[slotImg].name;
+        } else {
+          this[slotImg].name = 1;
+        }
+        this.dispatchEvent(new CustomEvent('slidechange', { bubbles: true, composed: true, detail: {
+            indexImg: this[slotImg].name
+        }}));
+      }, timeout);
+    }
+    stop() {
+      this.dispatchEvent( new CustomEvent('stopped', { bubbles: true, composed: true}));
+      clearInterval(this[timerId]);
+    }
+    next() {
+      this.stop();
+      if (this[slotImg].name < this[countImg]) this[slotImg].name = ++this[slotImg].name;
+      else this[slotImg].name = 1;
+      this.dispatchEvent(new CustomEvent('slidechange', { bubbles: true, composed: true, detail: {
+        indexImg: this[slotImg].name
+      }}));
+      this.start();
+    }
+    prev() {
+        this.stop();
+        if (this[slotImg].name > 1) this[slotImg].name = --this[slotImg].name;
+        else this[slotImg].name = this[countImg];
+        this.dispatchEvent(new CustomEvent('slidechange', { bubbles: true, composed: true, detail: {
+            indexImg: this[slotImg].name
+        }}));
+        this.start();
+    }
+  });
+})();
+</script>

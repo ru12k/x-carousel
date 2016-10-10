@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Document</title>
+  <link rel="import" href="x-carousel.html" id = 'linkTemplate'>
+</head>
+<body>
+<x-carousel data-timeout = "3" id = "host" data-width = "1000px">
+  <img src="img/1.jpg" slot = 1 alt="">
+  <img src="img/2.jpg" slot = 2 alt="">
+  <img src="img/3.jpg" slot = 3 alt="">
+  <img src="img/4.jpg" slot = 4 alt="">
+  <img src="img/5.jpg" slot = 5 alt="">
+</x-carousel>
+<ul class = "Info">
+  <li id = "imageIndex">
+    indexImage: 1
+  </li>
+  <li id = "sliderState">
+  </li>
+</ul>
+<script>
+  const host = document.querySelector('#host');
+  let state = document.querySelector('#sliderState');
+  let index = document.querySelector('#imageIndex');
+  host.addEventListener('started', () => state.textContent = 'Carousel started');
+  host.addEventListener('stopped', () => state.textContent = 'Carousel stopped');
+  host.addEventListener('slidechange', (e) => index.textContent = `indexImage: ${e.detail.indexImg}`);
+  host.start();
+</script>
+</body>
+</html>
